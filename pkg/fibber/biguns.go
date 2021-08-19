@@ -1,16 +1,18 @@
 package fibber
 
 import (
-	"fmt"
+	"errors"
 	"math/big"
 )
 
-func (seq MainSequence) BigFib(nth int) (big.Int, string) {
-	// LookupFib returns a value in the in-memory table of Fibonacci numbers
-	// if nth < 95 {
-	// 	x := big.NewInt(0)
-	// 	return x, errors.New("use LookupFib")
-	// }
+func (seq MainSequence) BigFib(nth int) (big.Int, error) {
+	/* BigFib calculates Fibonacci numbers bigger than the 94th number.
+	You cannot go higher than the 94th with uint64, so this is needed. */
+
+	if nth < 95 {
+		x := big.NewInt(0)
+		return *x, errors.New("use LookupFib")
+	}
 	var prev big.Int
 	var next big.Int
 	a, _ := seq.LookupFib(92)
@@ -22,5 +24,5 @@ func (seq MainSequence) BigFib(nth int) (big.Int, string) {
 		prev.Add(&prev, &next)
 		next, prev = prev, next
 	}
-	return prev, fmt.Sprintf("got %d and %d", a, b)
+	return prev, nil
 }
