@@ -5,10 +5,9 @@ import (
 	"math/big"
 )
 
+// BigFib calculates Fibonacci numbers bigger than the 94th number.
+// You cannot go higher than the 94th with uint64, so this is needed.
 func (seq MainSequence) BigFib(nth int) (big.Int, error) {
-	/* BigFib calculates Fibonacci numbers bigger than the 94th number.
-	You cannot go higher than the 94th with uint64, so this is needed. */
-
 	if nth < 95 {
 		x := big.NewInt(0)
 		return *x, errors.New("use LookupFib")

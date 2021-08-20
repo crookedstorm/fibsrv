@@ -16,3 +16,6 @@
 
 # vscode fluff
 .vscode/
+
+# Main binary output
+bin/fibsrv
