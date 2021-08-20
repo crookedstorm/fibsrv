@@ -13,7 +13,7 @@ import (
 
 var fibs fibber.MainSequence
 
-func InitRouter() (*gin.Engine, *fibber.MainSequence) {
+func InitRouter() *gin.Engine {
 	fibs.InitCache()
 	router := gin.New()
 	router.Use(gin.Logger())
@@ -23,7 +23,7 @@ func InitRouter() (*gin.Engine, *fibber.MainSequence) {
 	p.ReqCntURLLabelMappingFn = func(c *gin.Context) string {
 		url := c.Request.URL.String()
 		for _, p := range c.Params {
-			if p.Key == "name" {
+			if p.Key == "num" {
 				url = strings.Replace(url, p.Value, ":num", 1)
 				break
 			}
@@ -43,5 +43,5 @@ func InitRouter() (*gin.Engine, *fibber.MainSequence) {
 		}
 	})
 
-	return router, &fibs
+	return router
 }
