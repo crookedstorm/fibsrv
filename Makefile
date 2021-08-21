@@ -17,11 +17,11 @@ docker_build:
 clean:
 	@rm -f ${MKFILE_DIR}bin/*
 
-# up:
-# 	docker-compose -f deployments/docker-compose.yaml up -d
+up:
+	docker-compose -f deployments/docker-compose.yml up -d
 
-# down:
-# 	docker-compose -f deployments/docker-compose.yaml down
+down:
+	docker-compose -f deployments/docker-compose.yml down
 
 test:
 	go test ./...

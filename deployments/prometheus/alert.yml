@@ -1,0 +1,9 @@
+groups:
+  - name: AssignmentAlerts
+    rules:
+      - alert: PrometheusDown 
+        expr: up{job="fibsrv"} < 1 
+        for: 5m 
+      - alert: FibSrvDown
+        expr: up{job="prometheus"} < 1
+        for: 5m
