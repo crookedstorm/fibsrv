@@ -31,9 +31,14 @@ want the default debug mode. However, you really probably should use...
 
 
 ## Docker Compose!
-If you want things to be a bit tidier, you can run `make up` and you'll get a 
-docker container on port :3000 locally, prometheus monitoring it on :9000 and
-cadvisor reporting to prometheus as well.
+If you want things to be a bit tidier, you can run `make up` and you'll get a full
+deployment with nginx out front, 6 fibsrv workers behind it, prometheus monitoring
+(not sending alerts to anywhere in particular) and likely cadvisor (works on a family
+member's intel machine so probably yours as well).
+
+I recommend you try this method.
+
+When done, run `make down` if you want to type a little less than `docker-compose down`.
 
 ## The Wish List
 
@@ -77,13 +82,6 @@ The telescope was invented for more reasons than viewing the sky. It pays to be
 able to tell if the entire system is down, not just one pod. You cannot get an
 alert from inside a network that cannot communicate, for instance.
 
-### A Robust and HA Front Proxy
-
-A couple servers in a VRRP setup with keepalived and a configuration they share
-via puppet/chef/salt or some such nonsense not only keeps a stable IP for the
-outside world, it can also protect system that weren't written specifically for 
-the purpose from things like slowloris attacks and provide a quick reference for
-logging, DDoS mitigation, etc.
 
 ### Remote Logging
 
@@ -115,13 +113,13 @@ a gift to your future self that allow you to see things you didn't know you were
 looking for and find the patterns that actually help you decide if that SLA you 
 agreed to was a bad idea.
 
-## Some Tests
+## Beating on it
 
 The benchmarks and tests in the go code looked promising, but I know that
 I'd done nothing to stop golang from just running out of threads as it takes load
 
-When I cranked up `rakyll/hey` a little, I got what I was after (even using
-the precalculated array of numbers):
+When I cranked up `rakyll/hey` a little (to 250 workers and 600 requests), I
+thought I had what I was after (even using the precalculated array of numbers):
 ```
  hey -n 600 -c 250 http://localhost:3000/api/fibonacci/20
 
@@ -169,15 +167,69 @@ Status code distribution:
   [200]	348 responses
 
 Error distribution:
-  [4]	Get "http://localhost:3000/api/fibonacci/20": dial tcp [::1]:3000: socket: too many open files
-  [3]	Get "http://localhost:3000/api/fibonacci/20": dial tcp: lookup localhost: no such host
   [1]	Get "http://localhost:3000/api/fibonacci/20": read tcp [::1]:57091->[::1]:3000: read: connection reset by peer
   [1]	Get "http://localhost:3000/api/fibonacci/20": read tcp [::1]:57092->[::1]:3000: read: connection reset by peer
   [1]	Get "http://localhost:3000/api/fibonacci/20": read tcp [::1]:57093->[::1]:3000: read: connection reset by peer
   [1]	Get "http://localhost:3000/api/fibonacci/20": read tcp [::1]:57095->[::1]:3000: read: connection reset by peer
 <cut off for brevity>
 ```
-It runs fast, but eventually, it gets hurt. Also, prometheus didn't notice any
-problems because I wasn't running a proxy or load balancer yet to detect the failures
-from.
+Unfortunately, after scaling up my app to 6 servers with an nginx server in front
+using roundrobin docker compose DNS to kind of load balance the whole deal, it
+still does that becuase the error is actually from the client (hey). That was
+annoying. Apparently on my mac, `rakyll/hey` will (even with ulimit increased)
+eventually have spasms if I go much over 100 concurrent workers. That made me
+sad. Anyway, I'm including my final version with nginx plus 6 workers and hey attacking
+with 100 concurrent workers and the calculated big numers version (which is totally
+based on the example offered in the golang source code for the big module, I
+should add):
+```
+┌─[brooke][callisto][±][main {1} U:2 ✗][~/src/noodling/do-assignment]
+└─▪ hey -n 6600 -c 100 http://localhost:4000/api/fibonacci/180
+
+Summary:
+  Total:	1.5451 secs
+  Slowest:	0.1633 secs
+  Fastest:	0.0008 secs
+  Average:	0.0202 secs
+  Requests/sec:	4271.6188
+
+  Total data:	250800 bytes
+  Size/request:	38 bytes
+
+Response time histogram:
+  0.001 [1]	|
+  0.017 [3816]	|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  0.033 [1627]	|■■■■■■■■■■■■■■■■■
+  0.050 [750]	|■■■■■■■■
+  0.066 [222]	|■■
+  0.082 [91]	|■
+  0.098 [31]	|
+  0.115 [18]	|
+  0.131 [10]	|
+  0.147 [6]	|
+  0.163 [28]	|
+
+
+Latency distribution:
+  10% in 0.0043 secs
+  25% in 0.0072 secs
+  50% in 0.0141 secs
+  75% in 0.0284 secs
+  90% in 0.0423 secs
+  95% in 0.0531 secs
+  99% in 0.0929 secs
+
+Details (average, fastest, slowest):
+  DNS+dialup:	0.0001 secs, 0.0008 secs, 0.1633 secs
+  DNS-lookup:	0.0001 secs, 0.0000 secs, 0.0045 secs
+  req write:	0.0000 secs, 0.0000 secs, 0.0014 secs
+  resp wait:	0.0200 secs, 0.0008 secs, 0.1562 secs
+  resp read:	0.0001 secs, 0.0000 secs, 0.0102 secs
+
+Status code distribution:
+  [200]	6600 responses
+```
+That's pretty fast, I think. It's not doing much (no databases or queues to slow
+things down), and it's probably way more parallel than it needs right now.
+I could hammer on it more using different tools if I took more time.
 

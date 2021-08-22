@@ -6,10 +6,14 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
-    ports:
-      - 3000:3000
+    # ports:
+    #   - 3000:3000
+    expose:
+      - "3000"
     command:
       fibsrv
+    deploy:
+      replicas: 6
   prometheus:
     image: prom/prometheus:v2.21.0
     ports:
