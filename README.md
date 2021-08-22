@@ -23,14 +23,7 @@ The really easy way here is `make test`. If you want to try out the benchmarks,
 you can run `cd pkg/fibber && go test -bench=.` to see the wild difference between
 calculating `big.Int`s with the go code vs just doing a simple lookup in an array.
 
-## Docker
-
-You can build a docker container with `make docker_build`. This will tag the
-image to make it fairly easy to run with something like `docker run -e GIN_MODE=release -p 3000:3000 docker.io/crookedstorm/fibsrv:0.0.1` or you can leave off the environment variable for release mode if you
-want the default debug mode. However, you really probably should use...
-
-
-## Docker Compose!
+## Docker Compose
 If you want things to be a bit tidier, you can run `make up` and you'll get a full
 deployment with nginx out front, 6 fibsrv workers behind it, prometheus monitoring
 (not sending alerts to anywhere in particular) and likely cadvisor (works on a family
@@ -39,6 +32,12 @@ member's intel machine so probably yours as well).
 I recommend you try this method.
 
 When done, run `make down` if you want to type a little less than `docker-compose down`.
+## Docker
+
+You can build a docker container with `make docker_build`. This will tag the
+image to make it fairly easy to run with something like `docker run -e GIN_MODE=release -p 3000:3000 docker.io/crookedstorm/fibsrv:0.0.1` or you can leave off the environment variable for release mode if you
+want the default debug mode. However, you really probably should use...
+
 
 ## The Wish List
 
@@ -67,21 +66,11 @@ customize and bring together other helm charts. That sort of setup would be
 lovely for setting things up given a little time and testing. This also implies
 that there's a k8s cluster to plug into.
 
-### Actual Parallelism
-As hinted at above, I don't think starting one multithreaded golang process is all
-that mighty. Golang's http primitives are remarkably capable, but that doesn't
-mean a concerted effort wouldn't require horizontal scaling behind a load balancer.
-
-The dynamic load balancing you can get from autoscaling mechanisms is a thing of
-beauty. Kubernetes can do that behind a service regardless of platform if you
-don't rely on "load balancer" service types for everything.
-
 ### External Monitoring
 
 The telescope was invented for more reasons than viewing the sky. It pays to be
 able to tell if the entire system is down, not just one pod. You cannot get an
 alert from inside a network that cannot communicate, for instance.
-
 
 ### Remote Logging
 
