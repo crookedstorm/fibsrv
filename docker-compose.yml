@@ -8,10 +8,6 @@ services:
       dockerfile: ./Dockerfile
     ports:
       - 3000:3000
-    ulimits:
-      nofile:
-        soft: 98304
-        hard: 98304
     command:
       fibsrv
   prometheus:
@@ -26,6 +22,7 @@ services:
     - cadvisor
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
+    # image: budry/cadvisor-arm:latest
     container_name: cadvisor
     ports:
     - 8080:8080
