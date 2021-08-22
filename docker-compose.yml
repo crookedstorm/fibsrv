@@ -8,6 +8,10 @@ services:
       dockerfile: ./Dockerfile
     ports:
       - 3000:3000
+    ulimits:
+      nofile:
+        soft: 98304
+        hard: 98304
     command:
       fibsrv
   prometheus:
@@ -15,7 +19,7 @@ services:
     ports:
       - 9000:9090
     volumes:
-      - ./prometheus:/etc/prometheus/
+      - ./deployments/prometheus:/etc/prometheus/
       # - prometheus-data:/prometheus
     command: --web.enable-lifecycle  --config.file=/etc/prometheus/prometheus.yml
     depends_on:
